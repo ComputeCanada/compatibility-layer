@@ -4,13 +4,16 @@
 # This can be run on any machine which has Apptainer installed, no special privileges are required.
 #
 
+module --force purge
+module load gentoo/2020 apptainer
+
 ARCH=
 CONTAINER=docker://ghcr.io/eessi/bootstrap-prefix:debian11
 REPOSITORY="pilot.eessi-hpc.org"
 RESUME=
 RETAIN_TMP=0
 STORAGE=
-VERSION=2023.06
+VERSION=2023
 VERBOSE=
 
 display_help() {
