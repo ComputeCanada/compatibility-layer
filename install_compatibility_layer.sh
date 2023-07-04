@@ -9,7 +9,7 @@ module load gentoo/2020 apptainer
 
 ARCH=
 CONTAINER=docker://ghcr.io/eessi/bootstrap-prefix:debian11
-REPOSITORY="pilot.eessi-hpc.org"
+REPOSITORY="soft.computecanada.ca"
 RESUME=
 RETAIN_TMP=0
 STORAGE=
