@@ -32,7 +32,7 @@ prefix_bootstrap_use_flags: |
   */* PYTHON_SINGLE_TARGET: -* python3_11
 prefix_use_builtin_bootstrap: false
 prefix_custom_bootstrap_script:
-  local: "{{ playbook_dir }}/../../bootstrap-prefix.sh"
+  local: "{{ playbook_dir }}/../../bootstrap-prefix-upstream.sh"
   remote: /tmp/bootstrap-prefix.sh
 prefix_source_options: "{{ gentoo_prefix_path }} noninteractive"
 prefix_install: >-
