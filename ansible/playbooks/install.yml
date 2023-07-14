@@ -11,6 +11,7 @@
       :{{ ansible_env.PATH }}"
     EPREFIX: "{{ gentoo_prefix_path }}"
     BPREFIX: "{{ gentoo_prefix_path }}"
+    XDG_DATA_DIRS: "{{ gentoo_prefix_path }}/usr/share"
     LC_ALL: C
   roles:
     - compatibility_layer
