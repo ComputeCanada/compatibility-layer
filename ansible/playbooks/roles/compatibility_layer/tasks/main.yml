@@ -11,14 +11,8 @@
       target CPU architecture {{ eessi_host_arch }}.
   when: not (ansible_architecture == eessi_host_arch)
 
-- name: Check if a Prefix installation is found at the specified location
-  ansible.builtin.stat:
-    path: "{{ gentoo_prefix_path }}/startprefix"
-  register: startprefix
-
-- name: Install prefix if applicable
-  ansible.builtin.include_tasks: install_prefix.yml
-  when: not startprefix.stat.exists
+- name: Bootstrap prefix if applicable
+  ansible.builtin.include_tasks: bootstrap_prefix.yml
 
 - name: Set Ansible Python interpreter to the Prefix one
   ansible.builtin.set_fact:
@@ -33,11 +27,20 @@
 - name: Set the glibc trusted dirs
   ansible.builtin.include_tasks: set_glibc_trusted_dirs.yml
 
-- name: Install additional packages
-  ansible.builtin.include_tasks: install_packages.yml
-
 - name: Create symlinks to host files
   ansible.builtin.include_tasks: create_host_symlinks.yml
+
+- name: Check if a Prefix installation is found at the specified location
+  ansible.builtin.stat:
+    path: "{{ gentoo_prefix_path }}/startprefix"
+  register: startprefix
+
+- name: Install prefix if applicable
+  ansible.builtin.include_tasks: install_prefix.yml
+  when: not startprefix.stat.exists
+
+- name: Install additional packages
+  ansible.builtin.include_tasks: install_packages.yml
 
 - name: Clean up
   ansible.builtin.include_tasks: cleanup.yml

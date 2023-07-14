@@ -55,11 +55,11 @@ prefix_locales:
   - fr_CA.UTF-8 UTF-8
   - en_GB.UTF-8 UTF-8
 
-# By default, we install an architecture-specific set
 package_sets:
-  - "computecanada-{{ eessi_version }}"
+  - "profile"
 
 prefix_packages:
+  - dev-python/pip
 
 prefix_remove_packages:
   - app-eselect/eselect-rust
@@ -67,9 +67,11 @@ prefix_remove_packages:
   - dev-lang/go-bootstrap
   - dev-lang/rust
   - dev-lang/rust-bin
+  - dev-python/pip
   - dev-python/setuptools-rust
   - dev-util/cmake
   - dev-util/ninja
+  - sys-apps/merge-usr
   - virtual/rust
 
 reframe_venv_dir: /tmp/reframe_venv

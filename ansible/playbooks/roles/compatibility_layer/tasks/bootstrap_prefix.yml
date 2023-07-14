@@ -1,0 +1,173 @@
+# Install Gentoo Prefix up to stage3 (bootstrap)
+---
+
+- name: "Create Gentoo prefix path and log directory"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    recurse: false
+    mode: "0755"
+  with_items:
+    - "{{ gentoo_prefix_path }}"
+    - "{{ eessi_log_dir }}"
+  tags:
+    - build_prefix
+
+- name: "Check for sufficient disk space in {{ gentoo_prefix_path }}"
+  ansible.builtin.command: "df {{ gentoo_prefix_path }} --output=avail"
+  register: prefix_path_free_space
+  changed_when: true
+  tags:
+    - build_prefix
+
+- name: "Fail if there is not sufficient available disk space in {{ gentoo_prefix_path }}"
+  ansible.builtin.fail:
+    msg: "The Gentoo Prefix installation directory ({{ gentoo_prefix_path }}) does not have sufficient available disk space ({{ prefix_required_space }})."
+  when: (prefix_path_free_space.stdout_lines | last | float * 1024) is lt(prefix_required_space | human_to_bytes)
+  tags:
+    - build_prefix
+
+- name: "Copy custom bootstrap script"
+  ansible.builtin.copy:
+    src: "{{ prefix_custom_bootstrap_script.local }}"
+    dest: "{{ prefix_custom_bootstrap_script.remote }}"
+    mode: 0755
+  when: not prefix_use_builtin_bootstrap
+  tags:
+    - build_prefix
+
+- name: "Create $EPREFIX/etc/portage/repos.conf directory"
+  ansible.builtin.file:
+    path: "{{ gentoo_prefix_path }}/etc/portage/repos.conf"
+    state: directory
+    mode: 0755
+  tags:
+    - build_prefix
+
+- name: Configure Gentoo overlay
+  ansible.builtin.copy:
+    dest: "{{ gentoo_prefix_path }}/etc/portage/repos.conf/gentoo.conf"
+    mode: "0644"
+    content: |
+      [DEFAULT]
+      main-repo = gentoo
+      sync-git-pull-extra-opts = --quiet
+
+      [gentoo]
+      priority  = 1
+      location  = {{ gentoo_prefix_path }}/var/db/repos/gentoo
+      sync-uri  = {{ gentoo_git_repo }}
+      sync-type = git
+      auto-sync = no
+      clone-depth = 1
+  register: copy_gentoo_git_config
+  tags:
+    - build_prefix
+
+- name: Create repo.postsync.d directory
+  ansible.builtin.file:
+    path: "{{ gentoo_prefix_path }}/etc/portage/repo.postsync.d"
+    state: directory
+    mode: '0755'
+  tags:
+    - build_prefix
+
+- name: Add post-sync hooks for Gentoo overlay
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ gentoo_prefix_path }}/etc/portage/repo.postsync.d/{{ item }}"
+    mode: 0755
+  with_items:
+    - sync_gentoo_cache
+    - sync_gentoo_dtd
+    - sync_gentoo_glsa
+    - sync_gentoo_news
+    - sync_overlay_cache
+  tags:
+    - build_prefix
+
+- name: "Make directory for the Gentoo overlay"
+  ansible.builtin.file:
+    path: "{{ gentoo_prefix_path }}/var/db/repos"
+    mode: '0755'
+    state: directory
+  tags:
+    - build_prefix
+
+- name: "Clone the Gentoo git repository into the overlay directory"
+  ansible.builtin.git:
+    repo: "{{ gentoo_git_repo }}"
+    dest: "{{ gentoo_prefix_path }}/var/db/repos/gentoo"
+    depth: 1
+    force: true
+    version: master
+  tags:
+    - build_prefix
+
+- name: "Fetch the specific git commit to be used for the bootstrap"
+  ansible.builtin.git:
+    repo: "{{ gentoo_git_repo }}"
+    dest: "{{ gentoo_prefix_path }}/var/db/repos/gentoo"
+    clone: false
+    refspec: "{{ gentoo_git_commit }}"
+    depth: 1
+    version: master
+  tags:
+    - build_prefix
+
+- name: "Checkout the fetched git commit"
+  ansible.builtin.git:
+    repo: "{{ gentoo_git_repo }}"
+    dest: "{{ gentoo_prefix_path }}/var/db/repos/gentoo"
+    clone: false
+    version: "{{ gentoo_git_commit }}"
+  tags:
+    - build_prefix
+
+# If a file named .unpacked is present in the root of the gentoo overlay directory,
+# the bootstrap script will not extract a Portage tree snapshot file to that same directory.
+# See the do_tree() function in the bootstrap-prefix.sh script.
+- name: "Prevent our git checkout from being overwritten by making an '.unpacked' file"
+  ansible.builtin.copy:
+    content: ""
+    dest: "{{ gentoo_prefix_path }}/var/db/repos/gentoo/.unpacked"
+    mode: '0644'
+  tags:
+    - build_prefix
+
+- name: "Mask packages for the bootstrap"
+  ansible.builtin.copy:
+    dest: "{{ gentoo_prefix_path }}/etc/portage/package.mask"
+    content: "{{ prefix_mask_packages }}"
+    mode: 0644
+  when: prefix_mask_packages is defined and prefix_mask_packages | length > 0
+  tags:
+    - build_prefix
+
+- name: "Unmask packages for the bootstrap"
+  ansible.builtin.copy:
+    dest: "{{ gentoo_prefix_path }}/etc/portage/package.unmask"
+    content: "{{ prefix_unmask_packages }}"
+    mode: 0644
+  when: prefix_unmask_packages is defined and prefix_unmask_packages | length > 0
+  tags:
+    - build_prefix
+
+- name: "Run Gentoo Prefix bootstrap stages 1-3 via {{ prefix_install }}"
+  ansible.builtin.shell: set -o pipefail && ( {{ prefix_install }} | tee -a {{ prefix_build_log }} | grep -E '^(>>> Installing|\\* )' )
+  args:
+    executable: /bin/bash
+  changed_when: true
+  environment:
+    STOP_BOOTSTRAP_AFTER: stage3
+  tags:
+    - build_prefix
+
+- name: "Specify use flags before completing bootstrap"
+  ansible.builtin.copy:
+    dest: "{{ gentoo_prefix_path }}/etc/portage/package.use"
+    content: "{{ prefix_bootstrap_use_flags }}"
+    mode: '0644'
+  when: prefix_bootstrap_use_flags is defined and prefix_bootstrap_use_flags | length > 0
+  tags:
+    - build_prefix

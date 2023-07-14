@@ -43,6 +43,19 @@
     sync: 'yes'
     verbose: true
 
+- name: Install merge-usr
+  community.general.portage:
+    package: sys-apps/merge-usr
+    state: present
+
+- name: Run merge-usr
+  ansible.builtin.command:
+    cmd: "merge-usr --prefix {{ gentoo_prefix_path }}"
+
+- name: Set profile to computecanada:2023
+  ansible.builtin.command:
+    cmd: "eselect profile set computecanada:2023"
+
 - name: Find all files and directories in the etc/portage directory of the overlay
   ansible.builtin.find:
     file_type: any
