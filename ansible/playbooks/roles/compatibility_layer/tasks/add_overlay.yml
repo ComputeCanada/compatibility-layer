@@ -22,8 +22,8 @@
   changed_when: false
 
 - name: Add custom overlay configuration
-  ansible.builtin.command:
-    cmd: "eselect repository add {{ item.name }} {{ item.source }} {{ item.url }}"
+  ansible.builtin.shell:
+    cmd: "eselect repository add {{ item.name }} {{ item.source }} {{ item.url }} && echo 'priority = 50' >> {{ gentoo_prefix_path }}/etc/portage/repos.conf/eselect-repo.conf"
   when: item.name not in repositories_installed.stdout
   loop: "{{ custom_overlays }}"
 
