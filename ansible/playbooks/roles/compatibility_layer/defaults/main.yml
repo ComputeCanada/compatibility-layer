@@ -23,13 +23,6 @@ gentoo_git_commit: aab8473aa90e0287553b3348a5c5b17872df4b7b
 prefix_required_space: 15 GB
 prefix_user_defined_trusted_dirs:
   - "/cvmfs/{{ cvmfs_repository }}/host_injections/{{ eessi_version }}/lib"
-prefix_mask_packages: |
-  # mask dev-lang/rust so rust-bin is used instead (temporarily)
-  dev-lang/rust
-prefix_bootstrap_use_flags: |
-  # only install Python 3.11
-  */* PYTHON_TARGETS: -* python3_11
-  */* PYTHON_SINGLE_TARGET: -* python3_11
 prefix_use_builtin_bootstrap: false
 prefix_custom_bootstrap_script:
   local: "{{ playbook_dir }}/../../bootstrap-prefix-upstream.sh"
