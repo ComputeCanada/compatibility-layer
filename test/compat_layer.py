@@ -4,7 +4,7 @@ import reframe as rfm
 import reframe.utility.sanity as sn
 
 
-EESSI_REPO_DIR = '/cvmfs/pilot.eessi-hpc.org'
+EESSI_REPO_DIR = '/cvmfs/soft.computecanada.ca/gentoo'
 
 class RunInGentooPrefixTestError(rfm.core.exceptions.ReframeError):
     pass
@@ -29,7 +29,7 @@ class RunInGentooPrefixTest(rfm.RunOnlyRegressionTest):
             # resolve the "latest" symlink to the actual version
             self.eessi_version = os.readlink(os.path.join(EESSI_REPO_DIR, 'latest'))
         # 2021.06 did not have the 'versions' subdirectory yet
-        if self.eessi_version == '2021.06':
+        if self.eessi_version == '2021.06' or 'eessi' not in EESI_REPO_DIR:
             self.eessi_repo_dir = EESSI_REPO_DIR
         else:
             self.eessi_repo_dir = os.path.join(EESSI_REPO_DIR, 'versions')
@@ -37,9 +37,6 @@ class RunInGentooPrefixTest(rfm.RunOnlyRegressionTest):
         self.compat_dir = os.path.join(
             self.eessi_repo_dir,
             self.eessi_version,
-            'compat',
-            self.eessi_os,
-            self.eessi_arch,
         )
         self.executable = os.path.join(self.compat_dir, 'startprefix')
         self.command = None

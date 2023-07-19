@@ -42,13 +42,13 @@
 - name: Install additional packages
   ansible.builtin.include_tasks: install_packages.yml
 
-- name: Clean up
-  ansible.builtin.include_tasks: cleanup.yml
-
 - name: Test the Prefix installation
   ansible.builtin.include_tasks: test.yml
   tags:
     - test
+
+- name: Clean up
+  ansible.builtin.include_tasks: cleanup.yml
 
 - name: Save reproducibility information for this build
   ansible.builtin.include_tasks: reprod.yml
