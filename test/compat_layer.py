@@ -37,6 +37,7 @@ class RunInGentooPrefixTest(rfm.RunOnlyRegressionTest):
         self.compat_dir = os.path.join(
             self.eessi_repo_dir,
             self.eessi_version,
+            'x86-64-v3',
         )
         self.executable = os.path.join(self.compat_dir, 'startprefix')
         self.command = None

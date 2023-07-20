@@ -10,7 +10,7 @@ custom_overlays:
 
 cvmfs_repository: cmvfs.computecanada.ca
 
-gentoo_prefix_path: /cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}
+gentoo_prefix_path: /cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86-64-v3
 
 # How to build the prefix.
 gentoo_git_repo: https://github.com/gentoo/gentoo.git
