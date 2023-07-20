@@ -27,8 +27,8 @@
 # - name: Set the glibc trusted dirs (done via profile!)
 #   ansible.builtin.include_tasks: set_glibc_trusted_dirs.yml
 
-- name: Create symlinks to host files
-  ansible.builtin.include_tasks: create_host_symlinks.yml
+# - name: Create symlinks to host files (no longer needed!)
+#   ansible.builtin.include_tasks: create_host_symlinks.yml
 
 - name: Check if a Prefix installation is found at the specified location
   ansible.builtin.stat:
