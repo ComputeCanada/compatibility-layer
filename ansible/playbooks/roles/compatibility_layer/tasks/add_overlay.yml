@@ -71,3 +71,15 @@
     force: true
   with_items:
     "{{ find_configs.results | rejectattr('files', 'equalto', []) | map(attribute='files') | list }}"
+
+- name: Reinstall patched portage
+  community.general.portage:
+    package: sys-apps/portage
+    update: true
+    oneshot: true
+
+- name: Reinstall glibc for correct ldd hashbang
+  community.general.portage:
+    package: sys-libs/glibc
+    update: true
+    oneshot: true
