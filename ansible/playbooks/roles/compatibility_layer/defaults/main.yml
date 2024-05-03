@@ -19,7 +19,9 @@ gentoo_git_repo: https://github.com/gentoo/gentoo.git
 # April 17 (29492845e41ea6a0a4a9769c7e0ce287d106079b) commit is after fix for Lmod
 # gentoo_git_commit: 29492845e41ea6a0a4a9769c7e0ce287d106079b
 # June 8 (aab8473aa90e0287553b3348a5c5b17872df4b7b) commit that was current when fetching luaposix
-gentoo_git_commit: aab8473aa90e0287553b3348a5c5b17872df4b7b
+# July 24 (23317bd90047b06713fc1a81d9679cfe1fa7418d)
+# August 21 (039927d7985af573b92ed47474085532b7c97e53)
+gentoo_git_commit: 7d34be1e15c4af7a1385f1de39b99fe17a4e8f6b
 prefix_required_space: 15 GB
 prefix_user_defined_trusted_dirs:
   - "/cvmfs/{{ cvmfs_repository }}/host_injections/{{ eessi_version }}/lib"
