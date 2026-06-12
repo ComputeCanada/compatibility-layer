@@ -5,26 +5,17 @@
     cmd: emerge gentoolkit
     creates: "{{ gentoo_prefix_path }}/usr/bin/equery"
 
-- name: Install eselect-repository
-  community.general.portage:
-    package: eselect-repository
-    state: present
-
 # We need git in order to add Gentoo overlays hosted on git repositories.
 - name: Install git
   community.general.portage:
     package: dev-vcs/git
     state: present
 
-- name: Check which repositories have been installed
-  ansible.builtin.command: eselect repository list -i
-  register: repositories_installed
-  changed_when: false
-
-- name: Add custom overlay configuration
-  ansible.builtin.shell:
-    cmd: "eselect repository add {{ item.name }} {{ item.source }} {{ item.url }} && echo 'priority = 50' >> {{ gentoo_prefix_path }}/etc/portage/repos.conf/eselect-repo.conf"
-  when: item.name not in repositories_installed.stdout
+- name: Add configuration files for custom overlays
+  ansible.builtin.template:
+    src: overlay.conf.j2
+    dest: "{{ gentoo_prefix_path }}/etc/portage/repos.conf/{{ item.name }}.conf"
+    mode: "0644"
   loop: "{{ custom_overlays }}"
 
 - name: Make configuration file with overlays that can override eclasses
@@ -38,23 +29,16 @@
         selectattr('eclass-overrides', 'equalto', True) | map(attribute='name') | join(' ')
       }}
 
-- name: Sync the repositories
+# We do an explicit sync here (instead of using a handler),
+# so we can be sure that the overlays are up-to-date.
+- name: Sync the overlays to make sure that they are up to date
   community.general.portage:
     sync: 'yes'
     verbose: true
 
-- name: Install merge-usr
-  community.general.portage:
-    package: sys-apps/merge-usr
-    state: present
-
-- name: Run merge-usr
+- name: Set profile to computecanada:2026
   ansible.builtin.command:
-    cmd: "merge-usr --prefix {{ gentoo_prefix_path }}"
-
-- name: Set profile to computecanada:2023
-  ansible.builtin.command:
-    cmd: "eselect profile set computecanada:2023"
+    cmd: "eselect profile set computecanada:2026"
 
 - name: Find all files and directories in the etc/portage directory of the overlay
   ansible.builtin.find:

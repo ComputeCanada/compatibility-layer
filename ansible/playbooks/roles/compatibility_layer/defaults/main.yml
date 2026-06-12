@@ -1,6 +1,6 @@
 # Defaults file for the compatibility layer role.
 ---
-eessi_version: "2023"
+eessi_version: "2026"
 
 custom_overlays:
   - name: computecanada
@@ -8,7 +8,7 @@ custom_overlays:
     url: https://github.com/ComputeCanada/gentoo-overlay.git
     eclass-overrides: true
 
-cvmfs_repository: cmvfs.computecanada.ca
+cvmfs_repository: cvmfs.computecanada.ca
 
 gentoo_prefix_path: /cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86-64-v3
 
@@ -16,15 +16,13 @@ gentoo_prefix_path: /cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86
 gentoo_git_repo: https://github.com/gentoo/gentoo.git
 # Select a specific commit in the gentoo_git_repo that should be used for the bootstrap,
 # e.g. by checking: https://github.com/gentoo/gentoo/commits/master
-# April 17 (29492845e41ea6a0a4a9769c7e0ce287d106079b) commit is after fix for Lmod
-# gentoo_git_commit: 29492845e41ea6a0a4a9769c7e0ce287d106079b
-# June 8 (aab8473aa90e0287553b3348a5c5b17872df4b7b) commit that was current when fetching luaposix
-# July 24 (23317bd90047b06713fc1a81d9679cfe1fa7418d)
-# August 21 (039927d7985af573b92ed47474085532b7c97e53)
-gentoo_git_commit: 7d34be1e15c4af7a1385f1de39b99fe17a4e8f6b
+# June 7 2025 (083e38cef302128d595e9f9cfd029ad8f67ec2b7) commit that includes Lmod 8.7.60 and glibc 2.41
+gentoo_git_commit: 083e38cef302128d595e9f9cfd029ad8f67ec2b7
 prefix_required_space: 15 GB
 prefix_user_defined_trusted_dirs:
-  - "/cvmfs/{{ cvmfs_repository }}/host_injections/{{ eessi_version }}/lib"
+  - "/cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86-64-v3/lib/override"
+  - "/cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86-64-v3/lib/nvidia"
+  - "/cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86-64-v3/lib/amd"
 prefix_use_builtin_bootstrap: false
 prefix_custom_bootstrap_script:
   local: "{{ playbook_dir }}/../../bootstrap-prefix-upstream.sh"
@@ -64,7 +62,9 @@ prefix_remove_packages:
   - dev-lang/rust-bin
   - dev-python/pip
   - dev-python/setuptools-rust
-  - sys-apps/merge-usr
+  - dev-util/cmake
+  - dev-util/hermes
+  - dev-util/ninja
   - virtual/rust
 
 reframe_venv_dir: /tmp/reframe_venv
@@ -73,17 +73,33 @@ reframe_venv_dir: /tmp/reframe_venv
 # This ensures that things like user/group ids are correct/looked up in the right way in the Prefix environment.
 #symlinks_to_host:
   # required to ensure name-service information is taken from the right source (e.g. ldap)
-#  - /etc/nsswitch.conf
+  # - /etc/nsswitch.conf
+
+  # required to use the DNS resolver from the host (should be done automatically)
+  # - /etc/resolv.conf
 
   # required to pick up the right timezone from the host
-#  - /etc/localtime
+  # - /etc/localtime
+
+  # required if Centrify is used in nsswitch.conf
+  # - /lib64/libnss_centrifydc.so.2
+
+  # required if LDAP is used in nsswitch.conf
+  # - /lib64/libnss_ldap.so.2
+
+  # required if SSSD is used in nsswitch.conf
+  # - /lib64/libnss_sss.so.2
+
+  # required to make runtime data available for lots of tools (including who and w)
+  # - /var/run
+
+  # required by the last command
+  # - /var/log/wtmp
 
 #  - /var/lib/munge
 #  - /var/lib/unbound
 #  - /var/lib/VirtualGL
 #  - /var/log/munge
-#  - /var/log/wtmp
-#  - /var/run
 #  - /var/spool
 #  - /var/tmp
 #  - /run/dbus

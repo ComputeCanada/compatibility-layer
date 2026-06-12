@@ -11,6 +11,7 @@ class RunInGentooPrefixTestError(rfm.core.exceptions.ReframeError):
 
 
 class RunInGentooPrefixTest(rfm.RunOnlyRegressionTest):
+    eessi_repo_dir = os.environ.get('EESSI_REPO_DIR', EESSI_REPO_DIR)
     eessi_version = parameter(
         os.environ.get('EESSI_VERSION', 'latest').split(',')
     )
@@ -29,13 +30,14 @@ class RunInGentooPrefixTest(rfm.RunOnlyRegressionTest):
             # resolve the "latest" symlink to the actual version
             self.eessi_version = os.readlink(os.path.join(EESSI_REPO_DIR, 'latest'))
         # 2021.06 did not have the 'versions' subdirectory yet
-        if self.eessi_version == '2021.06' or 'eessi' not in EESI_REPO_DIR:
+        if self.eessi_version == '2021.06':
             self.eessi_repo_dir = EESSI_REPO_DIR
         else:
             self.eessi_repo_dir = os.path.join(EESSI_REPO_DIR, 'versions')
 
         self.compat_dir = os.path.join(
             self.eessi_repo_dir,
+            'versions',
             self.eessi_version,
             'x86-64-v3',
         )
@@ -67,11 +69,13 @@ class EchoTest(RunInGentooPrefixTest):
 
 @rfm.simple_test
 class ToolsAvailableTest(RunInGentooPrefixTest):
-    tool = parameter(['archspec', 'emerge', 'equery', 'ld.gold', 'make', 'patch', 'patchelf'])
+    tool = parameter(['archspec', 'emerge', 'equery', 'ld.bfd', 'ld.gold', 'make', 'patch', 'patchelf'])
 
     def __init__(self):
         # patchelf is only installed since 2021.06 compat layer
         self.skip_if(self.tool == 'patchelf' and self.eessi_version == '2021.03')
+        # 2023.06 still had both ld.bfd and ld.gold, but the latter will not be included in future versions
+        self.skip_if(self.tool == 'ld.gold' and self.eessi_version != '2023.06')
         super().__init__()
         self.descr = 'Verify that some required tools are available'
         self.command = f'which {self.tool}'
@@ -169,15 +173,13 @@ class Utf8LocaleTest(RunInGentooPrefixTest):
 
 @rfm.simple_test
 class SymlinksToHostFilesTest(RunInGentooPrefixTest):
+    # see https://github.com/EESSI/compatibility-layer/blob/main/ansible/playbooks/roles/compatibility_layer/defaults/main.yml
     symlink_to_host = parameter([
         'etc/group',
         'etc/passwd',
         'etc/hosts',
-        'etc/nsswitch.conf',
         'etc/resolv.conf',
         'lib64/libnss_centrifydc.so.2',
-        'lib64/libnss_ldap.so.2',
-        'lib64/libnss_sss.so.2',
     ])
 
     def __init__(self):
@@ -193,7 +195,7 @@ class SymlinksToHostFilesTest(RunInGentooPrefixTest):
             sn.assert_found(f'\n/{self.symlink_to_host}\n', self.stdout),
         ])
 
-        
+
 @rfm.simple_test
 class GentooOverlayGitTest(RunInGentooPrefixTest):
     def __init__(self):
@@ -212,7 +214,7 @@ class GentooOverlayGitTest(RunInGentooPrefixTest):
 
         self.sanity_patterns = sn.assert_found(gentoo_git_repo_info, self.stdout)
 
-        
+
 @rfm.simple_test
 class GlibcEnvFileTest(RunInGentooPrefixTest):
     def __init__(self):
@@ -223,17 +225,66 @@ class GlibcEnvFileTest(RunInGentooPrefixTest):
         self.descr = 'Verify that the env file for sys-libs/glibc was created and is picked up by emerge.'
         self.command = 'equery has --package glibc EXTRA_EMAKE'
 
-        trusted_dir = os.path.join(
-            EESSI_REPO_DIR,
-            'host_injections',
-            self.eessi_version,
-            'compat',
-            self.eessi_os,
-            self.eessi_arch,
-            'lib'
-        )
+        # in 2023.06 we had a single trusted directory in host_injections,
+        # in 2025.06 we introduced three subdirectories (override, nvidia, amd) in the lib dir of the compat layer itself.
+        if self.eessi_version == '2023.06':
+            trusted_dirs = os.path.join(
+                self.eessi_repo_dir,
+                'host_injections',
+                self.eessi_version,
+                'compat',
+                self.eessi_os,
+                self.eessi_arch,
+                'lib'
+            )
+        else:
+            trusted_dirs = [os.path.join(self.compat_dir, 'lib', subdir) for subdir in ['override', 'nvidia', 'amd']]
 
         self.sanity_patterns = sn.assert_found(
             f'user-defined-trusted-dirs={trusted_dir}',
             self.stdout
         )
+
+
+@rfm.simple_test
+class GlibcTrustedDirs(RunInGentooPrefixTest):
+    def __init__(self):
+        super().__init__()
+        self.descr = 'Verify that glibc was compiled with the custom user-defined trusted dirs.'
+        self.command = 'ld.so --help'
+
+        # in 2023.06 we had a single trusted directory in host_injections,
+        # in 2025.06 we introduced three subdirectories (override, nvidia, amd) in the lib dir of the compat layer itself.
+        if self.eessi_version == '2023.06':
+            trusted_dirs = os.path.join(
+                self.eessi_repo_dir,
+                'host_injections',
+                self.eessi_version,
+                'compat',
+                self.eessi_os,
+                self.eessi_arch,
+                'lib'
+            )
+        else:
+            trusted_dirs = [os.path.join(self.compat_dir, 'lib', subdir) for subdir in ['override', 'nvidia', 'amd']]
+
+        # ld.so --help prints the trusted directories as:
+        #   /path/to/dir (system search path)
+        trusted_dirs_pattern = '\n'.join(['  ' + td + ' \(system search path\)' for td in trusted_dirs])
+
+        self.sanity_patterns = sn.assert_found(
+            trusted_dirs_pattern,
+            self.stdout
+        )
+
+
+@rfm.simple_test
+class PipCheckTest(RunInGentooPrefixTest):
+    def __init__(self):
+        super().__init__()
+        self.descr = 'Verify that "pip check" does not return any errors.'
+        self.command = 'pip check'
+        self.sanity_patterns = sn.all([
+            sn.assert_eq(self.exit_code, 0),
+            sn.assert_found('\nNo broken requirements found.\n', self.stdout),
+        ])

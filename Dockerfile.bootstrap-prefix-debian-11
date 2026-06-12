@@ -1,0 +1,49 @@
+# stick to awscli v1.x, 2.x is not available through PyPI (see https://github.com/aws/aws-cli/issues/4947)
+ARG awscliversion=1.32.22
+ARG unionfsfuseversion=3.7
+
+FROM debian:11-slim
+ARG awscliversion
+ARG unionfsfuseversion
+
+COPY bootstrap-prefix.sh /usr/local/bin/bootstrap-prefix.sh
+
+RUN apt-get update
+RUN apt-get install -y gcc g++ make diffutils libgmp-dev perl wget
+RUN apt-get install -y git python3-pip python3-cryptography python3-venv
+RUN python3 -m venv --system-site-packages /opt/ansible && \
+    . /opt/ansible/bin/activate && \
+    pip3 install --upgrade pip && \
+    pip3 install ansible && \
+    ln -s /opt/ansible/bin/ansible* /usr/local/bin/ && \
+    deactivate
+RUN chmod 755 /usr/local/bin/bootstrap-prefix.sh
+# tools for deploying tarballs
+RUN apt-get install -y curl jq
+RUN python3 -m venv --system-site-packages /opt/awscli && \
+    . /opt/awscli/bin/activate && \
+    pip3 install --upgrade pip && \
+    pip3 install awscli==${awscliversion} && \
+    ln -s /opt/awscli/bin/aws /usr/local/bin/ && \
+    deactivate
+# unionfs-fuse
+RUN apt-get install -y cmake pkg-config libfuse3-dev \
+  && curl -OL https://github.com/rpodgorny/unionfs-fuse/archive/refs/tags/v${unionfsfuseversion}.tar.gz \
+  && tar xfvz v${unionfsfuseversion}.tar.gz \
+  && cd unionfs-fuse-${unionfsfuseversion} \
+  && mkdir build \
+  && cd build \
+  && cmake .. \
+  && make install \
+  && command -v unionfs \
+  && unionfs --version \
+  && unionfs --help \
+  && apt-get remove -y cmake pkg-config libfuse3-dev
+
+
+ENV LC_ALL=C.UTF-8
+ENV PATH=/usr/local/bin:$PATH
+
+RUN groupadd -g 1000 portage && useradd -ms /bin/bash -u 1000 -g portage portage
+
+ENTRYPOINT ["/usr/local/bin/bootstrap-prefix.sh"]
