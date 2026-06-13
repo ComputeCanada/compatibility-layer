@@ -14,6 +14,8 @@ cvmfs_repository: cvmfs.computecanada.ca
 
 gentoo_prefix_path: /cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86-64-v3
 
+compat_defaults_dir: /cvmfs/{{ cvmfs_repository }}/defaults/compat
+
 # How to build the prefix.
 gentoo_git_repo: https://github.com/gentoo/gentoo.git
 gentoo_git_branch: master
