@@ -3,7 +3,7 @@
 module --force purge
 module load gentoo/2023 apptainer
 
-curl "https://gitweb.gentoo.org/repo/proj/prefix.git/plain/scripts/bootstrap-prefix.sh?id=18b2060485f5d66a50c6bd7dcf2dd628cf89f0af" -o bootstrap-prefix-upstream.sh
+curl "https://gitweb.gentoo.org/repo/proj/prefix.git/plain/scripts/bootstrap-prefix.sh?id=55c58e90fb683662fa6d7ecd5b3697697eeb3e10" -o bootstrap-prefix-upstream.sh
 sed -i 's/cmd=\"emerge -v -/cmd=\"emerge --ask=n -v -/' bootstrap-prefix-upstream.sh
 sed -i 's/emerge -u /emerge --ask=n -u /' bootstrap-prefix-upstream.sh
 
