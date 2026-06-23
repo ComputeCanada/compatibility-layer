@@ -1,0 +1,75 @@
+# Vars file for the compatibility layer of CC StdEnv/2026
+---
+eessi_version: "2026"
+eessi_host_os: linux
+eessi_host_arch: "x86_64"
+
+custom_overlays:
+  - name: computecanada
+    source: git
+    url: https://github.com/ComputeCanada/gentoo-overlay.git
+    eclass-overrides: true
+
+# Select a specific commit in the gentoo_git_repo that should be used for the bootstrap,
+# e.g. by checking: https://github.com/gentoo/gentoo/commits/master
+# June 12 2026 (6aa0a2b9b48f1a014419286a54a7225c21c77d68) commit that includes Lmod 9.2.2 and glibc 2.43
+# June 16 2026 (04d385337d2dba9ad32450d10193f9c51e4e48d0) fixes zstd circular dep for Python
+gentoo_git_commit: 04d385337d2dba9ad32450d10193f9c51e4e48d0
+prefix_required_space: 15 GB
+prefix_user_defined_trusted_dirs:
+  - "/cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86-64-v3/lib/override"
+  - "/cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86-64-v3/lib/nvidia"
+  - "/cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86-64-v3/lib/amd"
+
+prefix_packages:
+  - dev-python/pip
+
+prefix_remove_packages:
+  - app-eselect/eselect-rust
+  - dev-lang/go
+  - dev-lang/go-bootstrap
+  - dev-lang/rust
+  - dev-lang/rust-bin
+  - dev-python/pip
+  - dev-python/setuptools-rust
+  - dev-util/cmake
+  - dev-util/hermes
+  - dev-util/ninja
+  - virtual/rust
+
+# List of locations that should get a symlink $EPREFIX/$LOCATION -> $LOCATION.
+# This ensures that things like user/group ids are correct/looked up in the right way in the Prefix environment.
+#symlinks_to_host:
+  # required to ensure name-service information is taken from the right source (e.g. ldap)
+  # - /etc/nsswitch.conf
+
+  # required to use the DNS resolver from the host (should be done automatically)
+  # - /etc/resolv.conf
+
+  # required to pick up the right timezone from the host
+  # - /etc/localtime
+
+  # required if Centrify is used in nsswitch.conf
+  # - /lib64/libnss_centrifydc.so.2
+
+  # required if LDAP is used in nsswitch.conf
+  # - /lib64/libnss_ldap.so.2
+
+  # required if SSSD is used in nsswitch.conf
+  # - /lib64/libnss_sss.so.2
+
+  # required to make runtime data available for lots of tools (including who and w)
+  # - /var/run
+
+  # required by the last command
+  # - /var/log/wtmp
+
+#  - /var/lib/munge
+#  - /var/lib/unbound
+#  - /var/lib/VirtualGL
+#  - /var/log/munge
+#  - /var/spool
+#  - /var/tmp
+#  - /run/dbus
+#  - /tmp
+
