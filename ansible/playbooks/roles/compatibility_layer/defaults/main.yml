@@ -1,18 +1,18 @@
 # Defaults file for the compatibility layer role.
 ---
-eessi_version: "2026"
+eessi_version: "2026.06"
 eessi_host_os: "linux"
 eessi_host_arch: "x86_64"
 
 custom_overlays:
-    - name: computecanada
+    - name: eessi
       source: git
-      url: https://github.com/ComputeCanada/gentoo-overlay.git
+      url: https://github.com/EESSI/gentoo-overlay.git
       eclass-overrides: true
 
-cvmfs_repository: cvmfs.computecanada.ca
+cvmfs_repository: software.eessi.io
 
-gentoo_prefix_path: /cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86-64-v3
+gentoo_prefix_path: /cvmfs/{{ cvmfs_repository }}/versions/{{ eessi_version }}/compat/{{ eessi_host_os }}/{{ eessi_host_arch }}
 
 compat_defaults_dir: /cvmfs/{{ cvmfs_repository }}/defaults/compat
 
@@ -50,7 +50,7 @@ prefix_unmask_packages:
 prefix_bootstrap_use_flags:
 prefix_use_builtin_bootstrap: false
 prefix_custom_bootstrap_script:
-    local: "{{ playbook_dir }}/../../bootstrap-prefix-upstream.sh"
+    local: "{{ playbook_dir }}/../../bootstrap-prefix.sh"
     remote: /tmp/bootstrap-prefix.sh
 prefix_source_options: "{{ gentoo_prefix_path }} noninteractive"
 prefix_install: >-
@@ -69,12 +69,10 @@ emerge_log: "{{ gentoo_prefix_path }}/var/log/emerge.log"
 
 prefix_locales:
     - en_US.UTF-8 UTF-8
-    - en_CA.UTF-8 UTF-8
-    - fr_CA.UTF-8 UTF-8
-    - en_GB.UTF-8 UTF-8
 
+# By default, we install an architecture-specific set
 package_sets:
-    - "profile"
+    - "eessi-{{ eessi_version }}-{{ eessi_host_os }}-{{ eessi_host_arch }}"
 
 prefix_packages: []
 prefix_remove_packages: []

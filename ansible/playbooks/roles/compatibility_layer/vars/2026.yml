@@ -2,74 +2,81 @@
 ---
 eessi_version: "2026"
 eessi_host_os: linux
-eessi_host_arch: "x86_64"
+eessi_host_arch: "{{ ansible_architecture }}"
 
 custom_overlays:
-  - name: computecanada
-    source: git
-    url: https://github.com/ComputeCanada/gentoo-overlay.git
-    eclass-overrides: true
+    - name: computecanada
+      source: git
+      url: https://github.com/ComputeCanada/gentoo-overlay.git
+      eclass-overrides: true
+      branch: 2026
+      commit: HEAD
+
+config_git_repo: https://github.com/ComputeCanada/gentoo-config.git
+
+cvmfs_repository: cvmfs.computecanada.ca
+
+gentoo_prefix_path: /cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86-64-v3
 
 # Select a specific commit in the gentoo_git_repo that should be used for the bootstrap,
 # e.g. by checking: https://github.com/gentoo/gentoo/commits/master
-# June 12 2026 (6aa0a2b9b48f1a014419286a54a7225c21c77d68) commit that includes Lmod 9.2.2 and glibc 2.43
-# June 16 2026 (04d385337d2dba9ad32450d10193f9c51e4e48d0) fixes zstd circular dep for Python
-gentoo_git_commit: 04d385337d2dba9ad32450d10193f9c51e4e48d0
+# July 7 2026
+gentoo_git_commit: 6916d96a84f1832cf1ce305a6a87053d8d4b0128
 prefix_required_space: 15 GB
 prefix_user_defined_trusted_dirs:
-  - "/cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86-64-v3/lib/override"
-  - "/cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86-64-v3/lib/nvidia"
-  - "/cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86-64-v3/lib/amd"
+    - "/cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86-64-v3/lib/override"
+    - "/cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86-64-v3/lib/nvidia"
+    - "/cvmfs/{{ cvmfs_repository }}/gentoo/{{ eessi_version }}/x86-64-v3/lib/amd"
+
+prefix_make_conf_files: {}
+prefix_package_env_files: {}
+prefix_profile_package_use_mask:
+
+prefix_custom_bootstrap_script:
+    local: "{{ playbook_dir }}/../../bootstrap-prefix-upstream.sh"
+    remote: /tmp/bootstrap-prefix.sh
+
+prefix_locales:
+    - en_US.UTF-8 UTF-8
+    - en_CA.UTF-8 UTF-8
+    - fr_CA.UTF-8 UTF-8
+    - en_GB.UTF-8 UTF-8
+
+package_sets:
+    - 2026
 
 prefix_packages:
-  - dev-python/pip
+    - dev-python/pip
 
 prefix_remove_packages:
-  - app-eselect/eselect-rust
-  - dev-lang/go
-  - dev-lang/go-bootstrap
-  - dev-lang/rust
-  - dev-lang/rust-bin
-  - dev-python/pip
-  - dev-python/setuptools-rust
-  - dev-util/cmake
-  - dev-util/hermes
-  - dev-util/ninja
-  - virtual/rust
+    - app-eselect/eselect-rust
+    - dev-lang/go
+    - dev-lang/go-bootstrap
+    - dev-lang/rust
+    - dev-lang/rust-bin
+    - dev-python/pip
+    - dev-python/setuptools-rust
+    - dev-util/cmake
+    - dev-util/hermes
+    - dev-util/ninja
+    - virtual/rust
 
-# List of locations that should get a symlink $EPREFIX/$LOCATION -> $LOCATION.
+# version of ReFrame to use for running the tests
+# stick to 4.9.3 for now, as 4.10.0 required a newer Rust in the container
+reframe_version: 4.9.3
+
+# List of locations that should get a (variant) symlink $EPREFIX/$LOCATION -> $LOCATION.
 # This ensures that things like user/group ids are correct/looked up in the right way in the Prefix environment.
-#symlinks_to_host:
-  # required to ensure name-service information is taken from the right source (e.g. ldap)
-  # - /etc/nsswitch.conf
+symlinks_to_host:
+    # AMD trusted dir, see prefix_user_defined_trusted_dirs
+    - dest: "{{ gentoo_prefix_path }}/lib/amd"
+      src: "$(EESSI_{{ eessi_version | replace('.', '') }}_AMD_OVERRIDE:-/cvmfs/{{ cvmfs_repository }}/defaults/amd)"
 
-  # required to use the DNS resolver from the host (should be done automatically)
-  # - /etc/resolv.conf
+    # NVIDIA trusted dir, see prefix_user_defined_trusted_dirs
+    - dest: "{{ gentoo_prefix_path }}/lib/nvidia"
+      src: "$(EESSI_{{ eessi_version | replace('.', '') }}_NVIDIA_OVERRIDE:-/cvmfs/{{ cvmfs_repository }}/defaults/nvidia)"
 
-  # required to pick up the right timezone from the host
-  # - /etc/localtime
-
-  # required if Centrify is used in nsswitch.conf
-  # - /lib64/libnss_centrifydc.so.2
-
-  # required if LDAP is used in nsswitch.conf
-  # - /lib64/libnss_ldap.so.2
-
-  # required if SSSD is used in nsswitch.conf
-  # - /lib64/libnss_sss.so.2
-
-  # required to make runtime data available for lots of tools (including who and w)
-  # - /var/run
-
-  # required by the last command
-  # - /var/log/wtmp
-
-#  - /var/lib/munge
-#  - /var/lib/unbound
-#  - /var/lib/VirtualGL
-#  - /var/log/munge
-#  - /var/spool
-#  - /var/tmp
-#  - /run/dbus
-#  - /tmp
+    # generic override trusted dir, see prefix_user_defined_trusted_dirs
+    - dest: "{{ gentoo_prefix_path }}/lib/override"
+      src: "$(EESSI_{{ eessi_version | replace('.', '') }}_LIB_OVERRIDE:-/cvmfs/{{ cvmfs_repository }}/defaults/override)"
 
