@@ -27,8 +27,14 @@
 - name: Include the variables file for this EESSI version
   ansible.builtin.include_vars: "{{ role_path }}/vars/{{ eessi_version }}.yml"
 
-- name: Bootstrap prefix if applicable
-  ansible.builtin.include_tasks: bootstrap_prefix.yml
+- name: Check if a Prefix installation is found at the specified location
+  ansible.builtin.stat:
+    path: "{{ gentoo_prefix_path }}/startprefix"
+  register: startprefix
+
+- name: Install prefix if applicable
+  ansible.builtin.include_tasks: install_prefix.yml
+  when: not startprefix.stat.exists
 
 - name: Set Ansible Python interpreter to the Prefix one
   ansible.builtin.set_fact:
@@ -40,28 +46,19 @@
 - name: Add EESSI overlay
   ansible.builtin.include_tasks: add_overlay.yml
 
-# - name: Set the glibc trusted dirs (done via profile!)
+# - name: Set the glibc trusted dirs (done via config repo!)
 #   ansible.builtin.include_tasks: set_glibc_trusted_dirs.yml
-
-- name: Check if a Prefix installation is found at the specified location
-  ansible.builtin.stat:
-    path: "{{ gentoo_prefix_path }}/startprefix"
-  register: startprefix
-
-- name: Install prefix if applicable
-  ansible.builtin.include_tasks: install_prefix.yml
-  when: not startprefix.stat.exists
 
 - name: Install additional packages
   ansible.builtin.include_tasks: install_packages.yml
+
+- name: Clean up
+  ansible.builtin.include_tasks: cleanup.yml
 
 - name: Test the Prefix installation
   ansible.builtin.include_tasks: test.yml
   tags:
     - test
-
-- name: Clean up
-  ansible.builtin.include_tasks: cleanup.yml
 
 - name: Replace regular symlinks to host files by variant symlinks
   ansible.builtin.include_tasks: create_host_symlinks.yml
