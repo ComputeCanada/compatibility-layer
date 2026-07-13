@@ -43,8 +43,8 @@
 - name: Configure the Prefix
   ansible.builtin.include_tasks: prefix_configuration.yml
 
-- name: Add EESSI overlay
-  ansible.builtin.include_tasks: add_overlay.yml
+# - name: Add EESSI overlay (done via config repo!)
+#   ansible.builtin.include_tasks: add_overlay.yml
 
 # - name: Set the glibc trusted dirs (done via config repo!)
 #   ansible.builtin.include_tasks: set_glibc_trusted_dirs.yml

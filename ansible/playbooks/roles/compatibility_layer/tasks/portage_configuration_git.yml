@@ -1,0 +1,9 @@
+---
+- name: "Create $EPREFIX/etc/portage directory with git checkout"
+  ansible.builtin.git:
+    repo: "{{ config_git_repo }}"
+    dest: "{{ gentoo_prefix_path }}/etc/portage"
+    depth: 1
+    force: true
+    version: "{{ eessi_version }}"
+...
