@@ -6,4 +6,11 @@
     depth: 1
     force: true
     version: "{{ eessi_version }}"
+
+- name: "Create temporary Portage package.use.mask file for bootstrap"
+  ansible.builtin.copy:
+    dest: "{{ gentoo_prefix_path }}/etc/portage/make.profile/package.use.mask"
+    content: "{{ prefix_temp_package_use_mask }}"
+    mode: "0644"
+  when: prefix_temp_package_use_mask is not none and prefix_temp_package_use_mask | length > 0
 ...
