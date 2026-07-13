@@ -46,19 +46,4 @@
   community.general.portage:
     sync: 'yes'
     verbose: true
-
-- name: Set profile to computecanada:2026
-  ansible.builtin.command:
-    cmd: "eselect profile set computecanada:2026"
-
-- name: Reinstall patched portage
-  community.general.portage:
-    package: sys-apps/portage
-    update: true
-    oneshot: true
-
-- name: Reinstall glibc for correct ldd hashbang
-  community.general.portage:
-    package: sys-libs/glibc
-    update: true
-    oneshot: true
+...
