@@ -30,10 +30,9 @@ prefix_user_defined_trusted_dirs:
 
 prefix_make_conf_files: {}
 prefix_package_env_files: {}
-prefix_profile_package_use_mask:
 
 # USE flags to mask only during bootstrap until halfway stage3 (where it syncs)
-prefix_temp_package_use_mask: |
+prefix_profile_package_use_mask: |
     app-admin/eselect emacs
     dev-db/sqlite icu
     dev-lang/python bluetooth
