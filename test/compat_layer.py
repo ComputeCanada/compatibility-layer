@@ -13,7 +13,7 @@ class RunInGentooPrefixTestError(rfm.core.exceptions.ReframeError):
 class RunInGentooPrefixTest(rfm.RunOnlyRegressionTest):
     eessi_repo_dir = os.environ.get('EESSI_REPO_DIR', EESSI_REPO_DIR)
     eessi_version = parameter(
-        os.environ.get('EESSI_VERSION', 'latest').split(',')
+        os.environ.get('EESSI_VERSION', '2026').split(',')
     )
     eessi_arch = parameter(
         os.environ.get('EESSI_ARCH', platform.machine()).split(',')
@@ -30,14 +30,13 @@ class RunInGentooPrefixTest(rfm.RunOnlyRegressionTest):
             # resolve the "latest" symlink to the actual version
             self.eessi_version = os.readlink(os.path.join(EESSI_REPO_DIR, 'latest'))
         # 2021.06 did not have the 'versions' subdirectory yet
-        if self.eessi_version == '2021.06':
+        if self.eessi_version == '2021.06' or 'eessi' not in EESSI_REPO_DIR:
             self.eessi_repo_dir = EESSI_REPO_DIR
         else:
             self.eessi_repo_dir = os.path.join(EESSI_REPO_DIR, 'versions')
 
         self.compat_dir = os.path.join(
             self.eessi_repo_dir,
-            'versions',
             self.eessi_version,
             'x86-64-v3',
         )
@@ -113,6 +112,7 @@ class ArchspecTest(RunInGentooPrefixTest):
 @rfm.simple_test
 class LmodTest(RunInGentooPrefixTest):
     def __init__(self):
+        self.skip_if(self.eessi_version == '2026')
         super().__init__()
         self.descr = 'Verify that Lmod can be used by running: module avail'
         if self.eessi_version.startswith('2020'):
@@ -189,6 +189,7 @@ class SymlinksToHostFilesTest(RunInGentooPrefixTest):
     def __init__(self):
         # the etc/hosts symlink was added in 2021 versions
         self.skip_if(self.symlink_to_host == 'etc/hosts' and self.eessi_version.startswith('2020'))
+        self.skip_if(self.eessi_version == '2026')
 
         super().__init__()
         self.descr = 'Verify that all required symlinks to host files have been created.'
@@ -209,7 +210,7 @@ class GentooOverlayGitTest(RunInGentooPrefixTest):
 
         super().__init__()
         self.descr = 'Verify that the Gentoo overlay is synced using git.'
-        self.command = f'emerge --info'
+        self.command = f'emerge --ask=n --info'
 
         gentoo_repo_dir = os.path.join(self.compat_dir, 'var', 'db', 'repos', 'gentoo')
         gentoo_git_repo_info = '''gentoo

@@ -10,4 +10,6 @@ sed -i 's/DISABLE_USE=($/DISABLE_USE=("-brotli"/' bootstrap-prefix-upstream.sh
 
 unset SSL_CERT_FILE
 unset CURL_CA_BUNDLE
+unset PIP_CONFIG_FILE
+unset PIP_CONSTRAINT
 ./install_compatibility_layer.sh -r soft.computecanada.ca -v 2026 ${1+"$@"}

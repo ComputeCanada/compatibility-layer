@@ -55,7 +55,7 @@ package_sets:
     - 2026
 
 prefix_packages:
-    - dev-python/pip
+    - name: dev-python/pip
 
 prefix_remove_packages:
     - app-eselect/eselect-rust
