@@ -6,6 +6,7 @@ module load gentoo/2023 apptainer
 curl "https://gitweb.gentoo.org/repo/proj/prefix.git/plain/scripts/bootstrap-prefix.sh?id=b3413b9fb607fc43ff97c8931eae346a248c96c8" -o bootstrap-prefix-upstream.sh
 sed -i 's/cmd=\"emerge -v -/cmd=\"emerge --ask=n -v -/' bootstrap-prefix-upstream.sh
 sed -i 's/emerge -u /emerge --ask=n -u /' bootstrap-prefix-upstream.sh
+sed -i 's/DISABLE_USE=($/DISABLE_USE=("-brotli"/' bootstrap-prefix-upstream.sh
 
 unset SSL_CERT_FILE
 unset CURL_CA_BUNDLE
